@@ -4,17 +4,95 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Time Converter</title>
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            background-color: #eef2f3;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        #container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            max-width: 650px;
+            margin: auto;
+        }
+        
+        .inputRow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            width: 45%;
+        }
+        
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background: linear-gradient(to right, #007bff, #00c6ff);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #0056b3, #0086ff);
+            transform: scale(1.05);
+        }
+        
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            white-space: pre;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .remove-btn {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            border: none;
+            color: white;
+            padding: 7px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .remove-btn:hover {
+            background: linear-gradient(to right, #d6003f, #d90000);
+            transform: scale(1.1);
+        }
+    </style>
     <script>
         function convertTime(input, date = 24) {
-            let [time, period] = input.split(' ');
-            let [hours, minutes] = time.split(':').map(num => parseInt(num, 10));
+            let match = input.match(/(\d{1,2}):(\d{1,2})\s?(AM|PM)/i);
+            if (!match) return null;
             
-            // Ensure hours and minutes are properly parsed
-            if (isNaN(hours) || isNaN(minutes)) {
-                return null;
-            }
+            let hours = parseInt(match[1], 10);
+            let minutes = parseInt(match[2], 10);
+            let period = match[3].toUpperCase();
 
-            // Convert to 24-hour format
             if (period === "PM" && hours !== 12) {
                 hours += 12;
             } else if (period === "AM" && hours === 12) {
@@ -40,50 +118,36 @@
             let output = document.getElementById("output");
             output.innerHTML = "";
             
+            let results = [];
             timeInputs.forEach((timeInput, index) => {
                 let timeValue = timeInput.value;
                 let dateValue = parseInt(dateInputs[index].value) || 24;
                 let result = convertTime(timeValue, dateValue);
                 if (result !== null) {
-                    output.innerHTML += `<p>Converted Value: ${result.toFixed(3)}</p>`;
+                    results.push(result.toFixed(3));
                 }
             });
-        }
-
-        function addInputFields(count = 1) {
-            let container = document.getElementById("inputContainer");
-            for (let i = 0; i < count; i++) {
-                let div = document.createElement("div");
-                div.classList.add("inputRow");
-                div.innerHTML = `
-                    <input type="text" class="timeInput" placeholder="Enter time (hh:mm AM/PM)" onpaste="splitPastedData(event)">
-                    <input type="number" class="dateInput" placeholder="Enter date (24, 25, 26)">
-                    <button onclick="removeInputField(this)">❌</button>
-                `;
-                container.appendChild(div);
-            }
+            
+            output.innerHTML = results.join('\r\n');
         }
 
         function splitPastedData(event) {
             event.preventDefault();
             let paste = (event.clipboardData || window.clipboardData).getData("text");
-            let values = paste.split(/\s+/).filter(value => value.trim() !== ""); // Splitting by spaces or newlines and removing empty values
+            let values = paste.match(/(\d{1,2}:\d{2}\s?(AM|PM))/gi);
             let container = document.getElementById("inputContainer");
             
-            for (let i = 0; i < values.length; i++) {
-                let value = values[i].trim();
-                if (!value.match(/AM|PM/i)) {
-                    value += " AM"; // Append AM if missing
-                }
+            if (!values) return;
+            values.forEach(value => {
                 let div = document.createElement("div");
                 div.classList.add("inputRow");
                 div.innerHTML = `
                     <input type="text" class="timeInput" value="${value}" placeholder="Enter time (hh:mm AM/PM)">
                     <input type="number" class="dateInput" placeholder="Enter date (24, 25, 26)">
-                    <button onclick="removeInputField(this)">❌</button>
+                    <button class="remove-btn" onclick="removeInputField(this)">❌</button>
                 `;
                 container.appendChild(div);
-            }
+            });
         }
 
         function removeInputField(button) {
@@ -92,16 +156,18 @@
     </script>
 </head>
 <body>
-    <div id="inputContainer">
-        <div class="inputRow">
-            <input type="text" class="timeInput" placeholder="Enter time (hh:mm AM/PM)" onpaste="splitPastedData(event)">
-            <input type="number" class="dateInput" placeholder="Enter date (24, 25, 26)">
-            <button onclick="removeInputField(this)">❌</button>
+    <div id="container">
+        <h2>🕒 Time Converter 🕒</h2>
+        <div id="inputContainer">
+            <div class="inputRow">
+                <input type="text" class="timeInput" placeholder="Enter time (hh:mm AM/PM)" onpaste="splitPastedData(event)">
+                <input type="number" class="dateInput" placeholder="Enter date (24, 25, 26)">
+                <button class="remove-btn" onclick="removeInputField(this)">❌</button>
+            </div>
         </div>
+        <button onclick="addInputFields()">➕ Add More</button>
+        <button onclick="handleInput()">🔄 Convert</button>
+        <div id="output"></div>
     </div>
-    <button onclick="addInputFields()">Add More</button>
-    <button onclick="addInputFields(200)">Add 200 More</button>
-    <button onclick="handleInput()">Convert</button>
-    <div id="output"></div>
 </body>
 </html>
