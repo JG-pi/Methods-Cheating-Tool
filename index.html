@@ -9,11 +9,11 @@
             let [time, period] = input.split(' ');
             let [hours, minutes] = time.split(':').map(num => parseInt(num, 10));
             
-            // Ensure minutes default to 50 if missing or single-digit
-            if (isNaN(minutes) || minutes < 10) {
-                minutes = 50;
+            // Ensure hours and minutes are properly parsed
+            if (isNaN(hours) || isNaN(minutes)) {
+                return null;
             }
-            
+
             // Convert to 24-hour format
             if (period === "PM" && hours !== 12) {
                 hours += 12;
@@ -28,10 +28,10 @@
                 adjustedHours += 48;
             }
             
-            let fractionalMinutes = parseInt(minutes, 10) / 60;
+            let fractionalMinutes = minutes / 60;
             let result = adjustedHours + fractionalMinutes;
             
-            return isNaN(result) ? null : result;
+            return isNaN(result) ? null : parseFloat(result.toFixed(3));
         }
 
         function handleInput() {
@@ -45,7 +45,7 @@
                 let dateValue = parseInt(dateInputs[index].value) || 24;
                 let result = convertTime(timeValue, dateValue);
                 if (result !== null) {
-                    output.innerHTML += `<p>${result}</p>`;
+                    output.innerHTML += `<p>Converted Value: ${result.toFixed(3)}</p>`;
                 }
             });
         }
@@ -67,25 +67,23 @@
         function splitPastedData(event) {
             event.preventDefault();
             let paste = (event.clipboardData || window.clipboardData).getData("text");
-            let values = paste.split(/\s+/); // Splitting by spaces or newlines
+            let values = paste.split(/\s+/).filter(value => value.trim() !== ""); // Splitting by spaces or newlines and removing empty values
             let container = document.getElementById("inputContainer");
             
-            values.forEach(value => {
-                value = value.trim();
-                if (value && !value.match(/AM|PM/i)) {
+            for (let i = 0; i < values.length; i++) {
+                let value = values[i].trim();
+                if (!value.match(/AM|PM/i)) {
                     value += " AM"; // Append AM if missing
                 }
-                if (value) {
-                    let div = document.createElement("div");
-                    div.classList.add("inputRow");
-                    div.innerHTML = `
-                        <input type="text" class="timeInput" value="${value}" placeholder="Enter time (hh:mm AM/PM)">
-                        <input type="number" class="dateInput" placeholder="Enter date (24, 25, 26)">
-                        <button onclick="removeInputField(this)">❌</button>
-                    `;
-                    container.appendChild(div);
-                }
-            });
+                let div = document.createElement("div");
+                div.classList.add("inputRow");
+                div.innerHTML = `
+                    <input type="text" class="timeInput" value="${value}" placeholder="Enter time (hh:mm AM/PM)">
+                    <input type="number" class="dateInput" placeholder="Enter date (24, 25, 26)">
+                    <button onclick="removeInputField(this)">❌</button>
+                `;
+                container.appendChild(div);
+            }
         }
 
         function removeInputField(button) {
